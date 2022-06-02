@@ -59,12 +59,16 @@ public class Screen extends JPanel implements ActionListener
 
 	private void update() 
 	{
-		int count = 0;
 		for (Snake snake : snakes)
 		{
+			if (snake instanceof PlayerSnake)
 			if (snake.isVisible())
 			{
-				snake.move();
+				PlayerSnake plySnake = (PlayerSnake)snake;
+				if (plySnake.getDirection().equals("NORTH"));
+					plySnake.move(0, 1);
+				if (plySnake.getDirection().equals("EAST"));
+					plySnake.move(1, 0);
 			}
 		}
 		

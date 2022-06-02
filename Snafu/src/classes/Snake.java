@@ -57,5 +57,5 @@ public abstract class Snake extends Sprite
   public void setHealth(int h)
   { health = h; }
 
-  public abstract void move();
+  public abstract void move(int dx, int dy);
 }
