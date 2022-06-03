@@ -1,19 +1,38 @@
 package classes;
 
-import javax.swing.*;
-import java.util.*;
 import java.awt.Image;
+
+import classes.Snake.Direction;
+
 import java.awt.Graphics2D;
 
 public abstract class Snake extends Sprite
 {
   private int tailLength;
   private int health;
+  protected Direction direction;
+  protected double speed = 5;
+  
+  public enum Direction 
+  {
+	    NORTH(new float[] {0, -1}),
+	    SOUTH(new float[] {0, 1}),
+	    EAST(new float[] {1, 0}),
+	    WEST(new float[] {-1, 0});
+		
+	    public final float[] directionValues;
+
+	    private Direction(float[] directionValues) 
+	    {
+	        this.directionValues = directionValues;
+	    }
+  }
   
   public Snake()
   {
     tailLength = 0;
     health = 1;
+    direction = Direction.SOUTH;
   }
 
   public Snake(int tailLength)
@@ -36,26 +55,21 @@ public abstract class Snake extends Sprite
     setImage(img);
   }
 
-  public void draw(Graphics2D graphics)
-  {
-    
-  }
-    
-  protected void drawCollider(Graphics2D graphics)
-  {
-    
-  }
-    
-  public boolean isColliding(Sprite sprite)
-  {
-     return false;
-  }
-
   public int getHealth()
   { return health; }
   
   public void setHealth(int h)
   { health = h; }
+ 
+  public Direction getDirection()
+  { return direction; }
+  
+  public void setDirection(Direction dir)
+  { direction = dir; }
 
-  public abstract void move(int dx, int dy);
+  public void move(float dx, float dy)
+  {
+	  collider.x += dx * speed;
+  	  collider.y += dy * speed;
+  }
 }

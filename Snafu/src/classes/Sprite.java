@@ -1,5 +1,6 @@
 package classes;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
@@ -10,20 +11,16 @@ public abstract class Sprite
 	protected boolean visible;
     protected Image image;
     protected Rectangle collider;
-    protected boolean isColliding;
 
     public Sprite() {
 
         visible = true;
-        isColliding = false;
         collider = new Rectangle(0, 0);
     }
     
     public Sprite(Image image) {
 
-        this.image = image;
-        collider = new Rectangle(collider.x, collider.y, image.getWidth(null), image.getHeight(null));
-        isColliding = false;
+        setImage(image);
     }
 
 
@@ -58,10 +55,14 @@ public abstract class Sprite
     	collider = new Rectangle(collider.x, collider.y, image.getWidth(null), image.getHeight(null));
     }
     
-    public abstract void draw(Graphics2D graphics);
+    public void draw(Graphics2D graphics)
+    {
+      graphics.drawImage(image, collider.x, collider.y, collider.width, collider.height,null);
+    }
     
-    protected abstract void drawCollider(Graphics2D graphics);
-    
-    public abstract boolean isColliding(Sprite sprite);
-	
+    protected void drawCollider(Graphics2D graphics)
+    {
+    	graphics.setColor(new Color(1f,0f,0f,.5f));
+		graphics.fillRect(collider.x, collider.y, collider.width, collider.height);
+    }
 }
