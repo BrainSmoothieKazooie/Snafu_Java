@@ -1,17 +1,16 @@
 package classes;
 
-import java.awt.Image;
+import java.awt.*;
+import java.util.*;
 
-import classes.Snake.Direction;
-
-import java.awt.Graphics2D;
-
-public abstract class Snake extends Sprite
+public abstract class Snake 
 {
-  private int tailLength;
+  protected boolean isVisible = true;
   private int health;
   protected Direction direction;
-  protected double speed = 5;
+  protected int speed = 5;
+  protected Rectangle collider = new Rectangle(10, 10);
+  protected HashMap<Point, Rectangle> pastPositions;
   
   public enum Direction 
   {
@@ -30,29 +29,15 @@ public abstract class Snake extends Sprite
   
   public Snake()
   {
-    tailLength = 0;
+    pastPositions = new HashMap<>();
     health = 1;
     direction = Direction.SOUTH;
   }
 
   public Snake(int tailLength)
   {
-    this.tailLength = tailLength;
+    pastPositions = new HashMap<>();
     health = 1;
-  }
-  
-  public Snake(int tailLength, Image img)
-  {
-    this.tailLength = tailLength;
-    health = 1;
-    setImage(img);
-  }
-
-  public Snake(Image img)
-  {
-    this.tailLength = 0;
-    health = 1;
-    setImage(img);
   }
 
   public int getHealth()
@@ -69,7 +54,87 @@ public abstract class Snake extends Sprite
 
   public void move(float dx, float dy)
   {
+	  for (int i = 0; i < speed; i++)
+	  {	
+		  int x = (int) (dx * speed);
+		  int y = (int) (dy * speed);
+		  pastPositions.put(new Point(collider.x+x, collider.y+y), 
+			  			new Rectangle(collider.x+x, collider.y+y, collider.width, collider.height));
+	  }
+	  
 	  collider.x += dx * speed;
   	  collider.y += dy * speed;
+  }
+
+  public void draw(Graphics2D graphics)
+    {
+      for (Map.Entry<Point, Rectangle> position : pastPositions.entrySet()) 
+      {
+    	Rectangle rect = position.getValue();
+    	  
+        graphics.setColor(Color.blue);
+        graphics.fillRect(rect.x, rect.y, rect.width, rect.height);
+      }
+      graphics.setColor(Color.blue);
+        graphics.fillRect(collider.x, collider.y, collider.width, collider.height);
+    }
+    
+    protected void drawCollider(Graphics2D graphics)
+    {
+    	graphics.setColor(new Color(1f,0f,0f,.5f));
+		graphics.fillRect(collider.x, collider.y, collider.width, collider.height);
+    }
+  public Rectangle getCollider()
+  { return collider; }
+  
+  public void setCollider(Rectangle rect)
+  { collider = new Rectangle(rect.x, rect.y, rect.width, rect.height); }
+
+  public boolean isVisible()
+  { return isVisible; }
+  
+  public void setVisibilty(boolean isVisible)
+  { this.isVisible = isVisible; }
+
+  public HashMap<Point, Rectangle> getPastPositions()
+  { return pastPositions; }
+
+  public boolean hasCollidedWithTail()
+  {
+	  Point point = new Point(collider.x, collider.y);
+	    if (pastPositions.containsKey(point))
+	    {
+	    	Rectangle bounds = pastPositions.get(point);
+	    	
+		    if (bounds.x + bounds.width >= collider.x && bounds.x <= collider.x + collider.width)
+		    {
+		        return true;
+		    }
+		    if (bounds.y + bounds.height >= collider.y && bounds.y <= collider.y + collider.height) 
+	    	{
+	    		return true;
+	    	}
+	    }
+	    return false;
+  }
+
+  public boolean hasCollided(Snake snake)
+  {
+	  
+	  Point point = new Point(collider.x, collider.y);
+	    if (snake.pastPositions.containsKey(point))
+	    {
+	    	Rectangle bounds = snake.pastPositions.get(point);
+	    	
+		    if (bounds.x + bounds.width >= collider.x && bounds.x <= collider.x + collider.width)
+		    {
+		        return true;
+		    }
+		    if (bounds.y + bounds.height >= collider.y && bounds.y <= collider.y + collider.height) 
+	    	{
+	    		return true;
+	    	}
+	    }
+	    return false;	
   }
 }

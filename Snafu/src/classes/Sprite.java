@@ -6,7 +6,7 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import javax.swing.ImageIcon;
 
-public abstract class Sprite 
+public class Sprite 
 {
 	protected boolean visible;
     protected Image image;
@@ -20,6 +20,13 @@ public abstract class Sprite
     
     public Sprite(Image image) {
 
+    	collider = new Rectangle(0, 0);
+        setImage(image);
+    }
+    
+    public Sprite(Image image, int x, int y) {
+
+    	collider = new Rectangle(x, y, 0, 0);
         setImage(image);
     }
 
@@ -47,6 +54,9 @@ public abstract class Sprite
     
     public Rectangle getCollider()
     { return collider; }
+    
+    public void setCollider(Rectangle rect)
+    { collider = rect; }
     
     public void resize(int width, int height)
     {
