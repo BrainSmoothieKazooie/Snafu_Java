@@ -29,6 +29,7 @@ public class TitleScreen extends JPanel implements ActionListener, KeyListener
 	private boolean finishedLoading;
 	private int speed = 2;
 	private boolean once = true;
+	private Timer timer;
 	
 	public TitleScreen(Window window)
 	{
@@ -44,7 +45,7 @@ public class TitleScreen extends JPanel implements ActionListener, KeyListener
 		logo = new Sprite(t, 0, getHeight()/2);
 		logo.resize(200, 200);
 		
-		Timer timer = new Timer(1000/60, this);
+		timer = new Timer(1000/60, this);
 		timer.start();
 	}
 
@@ -74,7 +75,7 @@ public class TitleScreen extends JPanel implements ActionListener, KeyListener
 	
 	public void paintComponent(Graphics g)
 	{
-		super.paintComponent(g);;
+		super.paintComponent(g);
 		
 		g.drawImage(logo.getImage(), logo.getCollider().x, logo.getCollider().y, 
 					logo.getCollider().width, logo.getCollider().height, null);
@@ -101,6 +102,7 @@ public class TitleScreen extends JPanel implements ActionListener, KeyListener
 		if (e.getKeyCode() == KeyEvent.VK_C)
 		{
 			window.switchScreen("main screen");
+			timer.stop();
 		}
 		
 	}

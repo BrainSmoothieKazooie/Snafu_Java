@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @SuppressWarnings("serial")
 public class MainScreen extends JPanel implements ActionListener
@@ -15,11 +16,13 @@ public class MainScreen extends JPanel implements ActionListener
 	protected Window window;
 	private int numberOfSnakesAlive;
 	private boolean once = true;
+	protected HashMap<Point, Rectangle> allPositionsTaken; 
 	
 	public MainScreen(Window window)
 	{
 		this.window = window;
 		snakes = new ArrayList<>();
+		allPositionsTaken = new HashMap<>();
 		
 		setFocusable(true);
 		setBackground(Color.black);
@@ -35,16 +38,16 @@ public class MainScreen extends JPanel implements ActionListener
 	
 	private void addSprites() 
 	{
-		//snakes.add(new PlayerSnake());
-		//snakes.add(new AISnake(getWidth()/4, getHeight()/4));
-		//snakes.add(new AISnake(getWidth()/2, getHeight()/2));
-		snakes.add(new AISnake(getWidth()/3, getHeight()/3));
+		//snakes.add(new PlayerSnake(getWidth()/4, getHeight()/4, this));
+		snakes.add(new AISnake(getWidth()/4, getHeight()/4, this));
+		snakes.add(new AISnake(getWidth()/2, getHeight()/2, this));
+		snakes.add(new AISnake(getWidth()/3, getHeight()/3, this));
 		
 		for (Snake snake : snakes)
 		{
 			if (snake instanceof PlayerSnake)
 			{
-				addKeyListener((PlayerSnake)snake);
+				addKeyListener((PlayerSnake)(snake));
 			}
 		}
 	}
@@ -64,7 +67,7 @@ public class MainScreen extends JPanel implements ActionListener
 	@Override
 	public void actionPerformed(ActionEvent e) 
 	{
-		if (isEnabled())
+		if (isEnabled() && numberOfSnakesAlive != 0)
 		{
 			if (once )
 			{
@@ -84,6 +87,7 @@ public class MainScreen extends JPanel implements ActionListener
 		{
 			if (!snakes.get(i).isVisible())
 			{
+				snakes.get(i).removeAllPositions();
 				snakes.remove(i);
 				numberOfSnakesAlive--;
 			}
@@ -112,26 +116,30 @@ public class MainScreen extends JPanel implements ActionListener
     for (int i = 0; i < snakes.size(); i++)
     {
       Snake snake = snakes.get(i);
-        if (isOutOfBounds(snake) || snake.hasCollidedWithTail())
+        if (isOutOfBounds(snake) || snake.hasCollided(snake))
           snake.setVisibilty(false);
-          for (int j = 0; j < snakes.size(); j++)
-            {
-              if (j != i)
-              {
-                if (snake.hasCollided(snakes.get(j)))
-                {
-                   snake.setVisibilty(false);
-                }
-              }
-            }
+        if (hasCollided(snakes.get(i).getCollider()))
+        {
+           snake.setVisibilty(false);
         }
+      }
 	}
+	
+	public HashMap<Point, Rectangle> getAllPositions()
+	{ return allPositionsTaken; }
 	
 	public boolean isOutOfBounds(Snake snake)
 	{
 		Rectangle collider = snake.getCollider();
 		return (collider.x < 0 || collider.x > getWidth()-collider.width || 
 				    collider.y < 0 || collider.y > getHeight()-collider.height);
+	}
+	
+	public boolean hasCollided(Rectangle rect)
+	{
+
+		  Point point = new Point(rect.x, rect.y);
+		    return (allPositionsTaken.containsKey(point));
 	}
 	
 	public boolean isOutOfBounds(Rectangle rect)
