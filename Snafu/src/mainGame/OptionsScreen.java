@@ -5,9 +5,9 @@ import classes.*;
 
 public class OptionsScreen extends JPanel
 {
-	private Window window;
+	private Screen window;
 	
-	public OptionsScreen(Window window)
+	public OptionsScreen(Screen window)
 	{
 		this.window = window;
 	}

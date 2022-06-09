@@ -20,9 +20,9 @@ import javax.swing.Timer;
 
 import classes.*;
 
-public class TitleScreen extends JPanel implements ActionListener, KeyListener
+public class TitleScreen extends Screen
 {
-	private Window window;
+	private Screen window;
 	private long titleTime;
 	private final long TITLE_LOADING_TIME = 500;
 	private Sprite logo;
@@ -33,20 +33,7 @@ public class TitleScreen extends JPanel implements ActionListener, KeyListener
 	
 	public TitleScreen(Window window)
 	{
-		this.window = window;
-		
-		setFocusable(true);
-		addKeyListener(this);
-		setBackground(Color.black);
-		setIgnoreRepaint(true);
-		this.setSize(this.window.getWidth(), this.window.getHeight());
-		ImageIcon temp = new ImageIcon("src/Sprites/Snake/Snafu_Box_Art.jpg");
-		Image t = temp.getImage();
-		logo = new Sprite(t, 0, getHeight()/2);
-		logo.resize(200, 200);
-		
-		timer = new Timer(1000/60, this);
-		timer.start();
+		super(window);
 	}
 
 	@Override

@@ -1,48 +1,23 @@
 package classes;
 
 import java.awt.event.*;
-import javax.swing.ImageIcon;
-import javax.swing.JPanel;
-
-import classes.Snake.Direction;
-import mainGame.MainScreen;
-
-import java.awt.Graphics2D;
+import java.util.HashMap;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 
 public class PlayerSnake extends Snake implements KeyListener
 {
-    public PlayerSnake(int x, int y, MainScreen main)
+    public PlayerSnake(int x, int y)
     {
-    	super(main);
         collider.x = x;
         collider.y = y;
         direction = Direction.SOUTH;
     }
     
-    public void draw(Graphics2D graphics)
+    public PlayerSnake(int x, int y, HashMap<Point, Rectangle> positions, Color color, int pixelSize)
     {
-      super.draw(graphics);
-    }
-      
-    @Override
-	public void keyTyped(KeyEvent e) 
-	{
-		// TODO Auto-generated method stub
-    	
-	}
-    
-    public void move(float dx, float dy)
-    {
-
-  		pastPositions.put(new Point(collider.x, collider.y), 
-  	  			new Rectangle(collider.x, collider.y, collider.width, collider.height));
-  		mainScreen.getAllPositions().put(new Point(collider.x, collider.y), 
-  	  			new Rectangle(collider.x, collider.y, collider.width, collider.height));
-  	  
-  	  collider.x += dx * speed;
-    	  collider.y += dy * speed;
+    	super(x, y, positions, color, pixelSize);
     }
   	
 	@Override
@@ -63,8 +38,9 @@ public class PlayerSnake extends Snake implements KeyListener
   	
 	@Override
 	public void keyReleased(KeyEvent e) 
-	{
-		// TODO Auto-generated method stub
-    		
-	}
+	{}
+
+    @Override
+	public void keyTyped(KeyEvent e) 
+	{}
 }

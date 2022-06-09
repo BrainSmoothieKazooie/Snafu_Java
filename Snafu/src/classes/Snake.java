@@ -1,61 +1,53 @@
 package classes;
 
 import java.awt.*;
-
-import mainGame.*;
 import java.util.*;
-
 import javax.swing.JPanel;
 
 public abstract class Snake 
 {
   protected boolean isVisible = true;
-  private int health;
   protected Direction direction;
-  protected int speed = 1;
-  protected Rectangle collider = new Rectangle(10, 10);
-  protected HashMap<Point, Rectangle> pastPositions;
-  protected MainScreen mainScreen;
-  
-  public enum Direction 
-  {
-	    NORTH(new float[] {0, -1}),
-	    SOUTH(new float[] {0, 1}),
-	    EAST(new float[] {1, 0}),
-	    WEST(new float[] {-1, 0});
-		
-	    public final float[] directionValues;
-
-	    private Direction(float[] directionValues) 
-	    {
-	        this.directionValues = directionValues;
-	    }
-  }
+  protected int speed;
+  protected Rectangle collider;
+  private Color snakeColor;
+  protected HashMap<Point, Rectangle> positions;
+  protected ArrayList<Point> points; 
   
   public Snake()
   {
-    pastPositions = new HashMap<>();
-    health = 1;
-    direction = Direction.SOUTH;
-  }
-
-  public Snake(int tailLength)
-  {
-    pastPositions = new HashMap<>();
-    health = 1;
+    direction = Direction.EAST;
+	snakeColor = Color.white;
   }
   
-  public Snake(MainScreen main)
+  public Snake(HashMap<Point, Rectangle> positions, Color color, int pixelSize)
   {
-	  pastPositions = new HashMap<>();
-	  mainScreen = main;
+	  speed = 1;
+	  direction = Direction.SOUTH;
+	  points = new ArrayList<>();
+	  collider = new Rectangle(pixelSize, pixelSize);
+	  this.positions = positions;
+	  snakeColor = color;
   }
-
-  public int getHealth()
-  { return health; }
   
-  public void setHealth(int h)
-  { health = h; }
+  public Snake(int x, int y, HashMap<Point, Rectangle> positions, Color color, int pixelSize)
+  {
+	  speed = 1;
+	  direction = Direction.SOUTH;
+	  points = new ArrayList<>();
+	  collider = new Rectangle(x, y, pixelSize, pixelSize);
+	  this.positions = positions;
+	  snakeColor = color;
+  }
+  
+  public Snake(int x, int y, Color color, int pixelSize)
+  {
+	  speed = 1;
+	  direction = Direction.SOUTH;
+	  points = new ArrayList<>();
+	  collider = new Rectangle(x, y, pixelSize, pixelSize);
+	  snakeColor = color;
+  }
  
   public Direction getDirection()
   { return direction; }
@@ -63,29 +55,36 @@ public abstract class Snake
   public void setDirection(Direction dir)
   { direction = dir; }
 
-  public void move(float dx, float dy)
+  public void move(int dx, int dy)
   {
-
-		pastPositions.put(new Point(collider.x, collider.y), 
-	  			new Rectangle(collider.x, collider.y, collider.width, collider.height));
-		mainScreen.getAllPositions().put(new Point(collider.x, collider.y), 
-	  			new Rectangle(collider.x, collider.y, collider.width, collider.height));
+	  if (!points.contains(new Point(collider.x, collider.y)))
+	  	  points.add(new Point(collider.x, collider.y));
+	  positions.put(new Point(collider.x, collider.y),
+				  	new Rectangle(collider.x, collider.y, collider.width, collider.height));
+	  int temp = speed;
 	  
-	  collider.x += dx * speed;
-  	  collider.y += dy * speed;
+	  while (temp > 0)
+	  {
+		  collider.x += dx * collider.width;
+	  	  collider.y += dy * collider.height;
+		  positions.put(new Point(collider.x, collider.y),
+					  	new Rectangle(collider.x, collider.y, collider.width, collider.height));
+		  if (!points.contains(new Point(collider.x, collider.y)))
+		  	  points.add(new Point(collider.x, collider.y));
+	  	  temp--;
+	  }
   }
 
   public void draw(Graphics2D graphics)
     {
-      for (Map.Entry<Point, Rectangle> position : pastPositions.entrySet()) 
+      graphics.setColor(snakeColor);
+      for (int i = 0; i < points.size()-1; i++) 
       {
-    	Rectangle rect = position.getValue();
-    	  
-        graphics.setColor(Color.blue);
-        graphics.fillRect(rect.x, rect.y, rect.width, rect.height);
+    	  Point point = points.get(i);
+    	  graphics.fillRect(point.x, point.y, collider.width, collider.height);
       }
-      graphics.setColor(Color.blue);
-        graphics.fillRect(collider.x, collider.y, collider.width, collider.height);
+      Point headPosition = points.get(points.size()-1);
+      graphics.fillRect(headPosition.x, headPosition.y, collider.width, collider.height);
     }
     
     protected void drawCollider(Graphics2D graphics)
@@ -105,8 +104,8 @@ public abstract class Snake
   public void setVisibilty(boolean isVisible)
   { this.isVisible = isVisible; }
 
-  public HashMap<Point, Rectangle> getPastPositions()
-  { return pastPositions; }
+  public ArrayList<Point> getPastPositions()
+  { return points; }
 
   public boolean hasCollided(Snake snake)
   {
@@ -114,29 +113,25 @@ public abstract class Snake
   }
   
   public boolean hasCollided(Rectangle rect)
-  {
-	  Point point = new Point(rect.x, rect.y);
-	    if (pastPositions.containsKey(point))
-	    {
-	    	Rectangle bounds = pastPositions.get(point);
-	    	
-		    if (rect.x + rect.width >= bounds.x && rect.x <= bounds.x + bounds.width)
-		    {
-		        return true;
-		    }
-		    if (rect.y + rect.height >= bounds.y && rect.y <= bounds.y + bounds.height) 
-	    	{
-	    		return true;
-	    	}
-	    }
-	    return false;	
+  {	
+	  return positions.containsKey(new Point(rect.x, rect.y)) &&
+			 points.size() > 0 && !points.get(points.size()-1).equals(new Point(rect.x, rect.y));
+  }
+  
+  public boolean hasCollided(ArrayList<Point> p)
+  {	
+	  return p.contains(new Point(collider.x, collider.y));
   }
 
-public void removeAllPositions() 
-{
-	for (Map.Entry<Point, Rectangle> position : pastPositions.entrySet()) 
-    {
-		mainScreen.getAllPositions().remove(position.getKey());
-    }
+	public void removeAllPositions() 
+	{
+		for (Point point : points) 
+	    {
+			positions.remove(point);
+	    }
+	}
+	
+	public void setVisible(boolean visible)
+	{ isVisible = visible; }
 }
-}
+
