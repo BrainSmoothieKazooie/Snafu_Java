@@ -1,23 +1,14 @@
 package mainGame;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.io.File;
-import java.util.ArrayList;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
-import javax.swing.*;
-
-import classes.MusicHandler;
-
+// The main Window of the game.
 public class Window extends JFrame
 {	
 	public Window()
 	{
-		add(new GameScreen());
+		add(new MainScreen());
 		setTitle("Snafu");
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -27,6 +18,13 @@ public class Window extends JFrame
 
 	public static void main(String[] args)
 	{
-		new Window();
+	    SwingUtilities.invokeLater(new Runnable() 
+	    {
+            @Override
+            public void run() 
+            {
+                new Window();                
+            }
+        });
 	}
 }
