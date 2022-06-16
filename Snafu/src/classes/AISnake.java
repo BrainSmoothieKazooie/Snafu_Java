@@ -1,13 +1,14 @@
 package classes;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 import mainGame.GameScreen;
 
-/**
- * Represents an ai snake that has
-
- * all of the attributes of a Snake object.
+/*
+ * AISnake.java
+ * 
+ * Represents an ai snake that has all of the attributes of a Snake object.
  * 
  * How the ai works...
  * 
@@ -25,9 +26,11 @@ import mainGame.GameScreen;
  * another snake's body, or an obstacle. 
  * 
  * When changing its direction, the Snake will look at every point
- * around it (picture in readme) and when it finds an empty position,
+ * around it and when it finds an empty position,
  * it will change its direction so that its next move will land on that
- * position. 
+ * empty position. 
+ * 
+ * Directions are randomized in order to allow more variation in movement. 
  * 
  * Author: Andrew Tacoi
  */
@@ -49,6 +52,7 @@ public class AISnake extends Snake
 	public AISnake(int x, int y, GameScreen game, Color color, int pixelSize)
 	{
 		super(x, y, color, pixelSize);
+		
 		gameScreen = game;
 		positions = game.getPositions();
         setRandomDirection();
@@ -57,6 +61,7 @@ public class AISnake extends Snake
 	public AISnake(GameScreen game, Color color, int pixelSize)
 	{
 		super(color, pixelSize);
+		
 		gameScreen = game;
 		positions = game.getPositions();
 		Point pos = new Point(0, 0);
@@ -67,6 +72,7 @@ public class AISnake extends Snake
 	public AISnake(int x, int y, GameScreen game, Color color, int pixelSize, Direction direct)
 	{
 		super(x, y, color, pixelSize);
+		
 		gameScreen = game;
 		positions = game.getPositions();
 		direction = direct;
@@ -75,22 +81,16 @@ public class AISnake extends Snake
    // *********************  Public Methods  *********************
 	
 	@Override
-	public void move(int dx, int dy)
+	public void move(int dx, int dy) // Moves the AISnake, then determines if it should change its direction.
 	{  
-	    if (!points.contains(new Point(collider.x, collider.y)))
-		  	  points.add(new Point(collider.x, collider.y));
-	    
-	    positions.put(new Point(collider.x, collider.y),
-				  	new Rectangle(collider.x, collider.y, collider.width, collider.height));
-	    
-	    collider.x += dx * collider.width;
-	    collider.y += dy * collider.height;
+	    super.move(dx, dy);
+	   
         determineDirection();
 	}
 	
 	 // *********************  Private Methods  *********************
     
-    private void setRandomDirection() // 1/8 chance of any direction
+    private void setRandomDirection() // 1/8 chance of any of the eight possible directions.
     {
         double random = Math.random();
         
@@ -111,7 +111,7 @@ public class AISnake extends Snake
         else
             direction = Direction.SOUTHWEST;
     }
-    private Point getNextPos() 
+    public Point getNextPos() 
     {
     	int[] arr = direction.directionValues;
     
@@ -126,13 +126,13 @@ public class AISnake extends Snake
         Rectangle col = new Rectangle (nextPosition.x, nextPosition.y, collider.width, collider.height);
       
         // will the snake be out of bounds or touch another object when it moves?  
-        if (gameScreen.isOutOfBounds(col) || hasCollided(col))
+        if (gameScreen.isOutOfBounds(col) || gameScreen.hasCollided(col))
         {
             changeDirection();
         }
     }
 
-    // Changes its direction when it finds a point not already occupied. More information in readme
+    // Changes its direction when it finds a point not already occupied.
     private void changeDirection() 
     {
         Point nextPosition = getNextPos();
@@ -140,10 +140,13 @@ public class AISnake extends Snake
         int pixelSize = GameScreen.PIXEL_SIZE;
         
         int countOutter = 0;
-        for (int y = collider.y-pixelSize; countOutter < 3; y += pixelSize)
+        
+        ArrayList<Direction> directions = new ArrayList<>();
+        
+        for (int y = collider.y - pixelSize; countOutter < 3; y += pixelSize)
         {
             int count = 0;
-            for (int x = collider.x-pixelSize; count < 3; x += pixelSize)
+            for (int x = collider.x - pixelSize; count < 3; x += pixelSize)
             {
                 Point nextPoint = new Point(x, y);
                 
@@ -151,14 +154,31 @@ public class AISnake extends Snake
                 if (!nextPoint.equals(nextPosition) && !nextPoint.equals(new Point(collider.x, collider.y))) 
                 {
                     Rectangle nextPointRect = new Rectangle(nextPoint.x, nextPoint.y, collider.width, collider.height);
-                    if (!positions.containsKey(nextPoint) && !gameScreen.isOutOfBounds(nextPointRect))
-                    {
-                        direction = Direction.getDirection(new int[] {(nextPoint.x-collider.x)/pixelSize, (nextPoint.y-collider.y)/pixelSize});
-                    }
+                    
+                    if (!gameScreen.hasCollided(nextPoint) && !gameScreen.isOutOfBounds(nextPointRect)) // Adds only the directions that will not result in the snake dying.
+                        directions.add(Direction.getDirection(new int[] {(nextPoint.x-collider.x)/pixelSize, (nextPoint.y-collider.y)/pixelSize}));
+                    
                 }
                 count++;
             } 
             countOutter++;
         }
+        
+        setRandomDirection(directions);
+    }
+
+    // Sets the AISnake to a random Direction by getting a random index that ranges from (0, directions.size()-1)
+    private void setRandomDirection(ArrayList<Direction> directions) 
+    {
+        int size = directions.size();
+        
+        if (size == 0)
+            return;
+        
+        int random = (int)(Math.random()*size);
+       
+        direction = directions.get(random);
+        
+        
     }
 }

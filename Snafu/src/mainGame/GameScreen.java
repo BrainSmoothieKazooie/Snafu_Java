@@ -9,81 +9,284 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 
-import java.io.File;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.swing.ImageIcon;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
 import javax.swing.JPanel;
 
-import classes.AISnake;
-import classes.Direction;
-import classes.PlayerSnake;
-import classes.Snake;
-import classes.Sprite;
+import classes.*;
+
+/*
+ * GameScreen.java
+ * 
+ * A class where the main game is played.
+ * 
+ * It contains two ArrayLists representing all
+ * the snakes and obstacles on the Screen.
+ * 
+ * All variables in the constructor will be given from
+ * the GameSetter class.
+ * 
+ * Each object (snakes, obstacles) will be placed on a 
+ * grid, with its size being determined by the
+ * PIXEL_SIZE constant. 
+ * 
+ * Before each snake moves, the screen will wait for
+ * the amount of time in the LOADING_TIME variable and
+ * then start movements, collision checks, etc. 
+ * 
+ * The HashMap positions is used to allow for snakes
+ * and the screen itself to easily access, and check
+ * if a Point does exist. This Map is the main
+ * way that collisions will be handled and AISnake
+ * direction determination.
+ * 
+ * Author: Andrew Tacoi
+ */
 
 @SuppressWarnings("serial")
 public class GameScreen extends JPanel implements ScreenActions 
-{
-    private HashMap<Point, Rectangle> positions;
+{ 
+    // *********************  Fields  *********************  
+
     public static final int PIXEL_SIZE = 16;
+    private final long LOADING_TIME = 20;
+    
+    private HashMap<Point, Rectangle> positions;
     private ArrayList<Snake> snakes;
-    private ArrayList<Sprite> objects;
+    private ArrayList<Sprite> obstacles;
     private int numberOfSnakesAlive;
     private MainScreen mainScreen;
     private long loadingTime;
-    private final long LOADING_TIME = 20;
     private int numberOfRounds;
-    private int numberOfObjects;
+    private int numberOfObstacles;
     private int numberOfPlayers;
     private int numberOfComputers;
     private Color[] colors;
+    
+    // *********************  Constructors  *********************
 
-    public GameScreen(MainScreen screen, int speed, int objectCount, int playerCount, int computerCount,
-                      Color[] colors, int numOfRounds) {
+    public GameScreen(MainScreen screen, int speed, int obstacleCount, int playerCount, int computerCount,
+                      int numOfRounds, Color[] colors) 
+    {
         mainScreen = screen;
         setName("game screen");
         setBackground(Color.black);
         this.setBounds(this.getX(), this.getY(), mainScreen.getWidth(), mainScreen.getHeight());
-
+        
         positions = new HashMap<>();
         numberOfRounds = numOfRounds;
         numberOfPlayers = playerCount;
         numberOfComputers = computerCount;
-        numberOfObjects = objectCount;
+        numberOfObstacles = obstacleCount;
         this.colors = colors;
 
         screen.timer.setDelay(1000 / speed);
         
         initializeScreen();
     }
+    
+    // *********************  Public Methods  *********************
+    
+    // Returns true if the current Point is beyond the GameScreen's boundaries.
+    public boolean isOutOfBounds(Rectangle rect) 
+    {
+        return (rect.x < 0 || rect.x > getWidth() - rect.width || rect.y < 0 || rect.y > getHeight() - rect.height);
+    }
 
-    private void addObjects(int numOfObjects) {
+    public boolean isOutOfBounds(Snake snake) 
+    {
+        Rectangle collider = snake.getCollider();
+        return (collider.x < 0 || collider.x > getWidth() - collider.width || collider.y < 0
+                || collider.y > getHeight() - collider.height);
+    }
+
+    @Override
+    public void paintComponent(Graphics g) 
+    {
+        super.paintComponent(g);
+        
+        if (numberOfSnakesAlive > 1) // Paints only when there are two or more snakes alive. 
+        {
+            for (Snake snake : snakes) 
+            {
+                if (snake.isAlive())
+                    snake.draw((Graphics2D) g);
+            }
+            for (Sprite object : obstacles) 
+            {
+                object.draw((Graphics2D) g);
+            }
+        } 
+        
+        else 
+        {
+            Graphics2D graphics = (Graphics2D) g;
+            
+            String temp = "";
+            
+            int winnerIndex = getSnakeAliveIndex();
+            
+            if (winnerIndex == -1) // No snakes are alive. 
+            {
+                temp = "draw";
+            }
+            
+            else // Draws the last Snake alive. 
+            {
+                temp = "Snake #" + (winnerIndex+1) + " wins!";
+                Snake winnerSnake = snakes.get(winnerIndex);                
+                winnerSnake.draw(graphics);
+            }
+        
+            graphics.setColor(Color.white);
+            graphics.setFont(new Font("impact", Font.PLAIN, 40));
+            graphics.drawString(temp, getWidth() / 2 - temp.length() * (PIXEL_SIZE/4), getHeight() / 2);
+        }
+    }
+    
+    @Override
+    public void step() 
+    {
+        if (numberOfSnakesAlive > 1 && !(loadingTime <= LOADING_TIME)) // Executes when the Screen has finished loading and there are two or more snakes alive.  
+        {
+            update();
+            checkCollisions();
+        }
+        
+        repaint();
+        loadingTime++;
+    }
+
+    // Checks if the given Object's Point is already in the positions HashMap.
+    public boolean hasCollided(Snake snake)
+    { return hasCollided(snake.getCollider()); }
+
+    public boolean hasCollided(Rectangle rect)
+    { return hasCollided(new Point(rect.x, rect.y)); }
+    
+    public boolean hasCollided(Point point)
+    { return positions.containsKey(point); }
+    
+    @Override
+    public void initializeScreen() // Creates all the Snakes and Obstacles. 
+    {
+        addSnakes(numberOfPlayers, numberOfComputers, colors);
+        addObstacles(numberOfObstacles);
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) 
+    {
+        // Allows the user to skip to the next round if all PlayerSnakes are dead, or if all Snakes are dead.
+        if ((numberOfSnakesAlive <= 1 && e.getKeyCode() == KeyEvent.VK_ENTER) || 
+            (e.getKeyCode() == KeyEvent.VK_ENTER && !playerSnakeAlive())) 
+        {
+            numberOfRounds--;
+            if (numberOfRounds > 0)
+            {
+                removeAllItems();
+                initializeScreen();
+            }
+            
+            else // Resets back to the OptionsScreen
+            {
+                mainScreen.remove(this);
+                mainScreen.timer.setDelay(1000 / 60);
+                mainScreen.switchScreen("options screen");
+            }
+        }
+        
+        else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) // User can exit to the OptionsScreen by pressing the Escape key.
+        {
+            mainScreen.remove(this);
+            mainScreen.timer.setDelay(1000 / 60);
+            mainScreen.switchScreen("options screen");
+        }
+
+        for (Snake snake : snakes) // Gives all PlayerSnakes the keyPressed.
+        {
+            if (snake instanceof PlayerSnake) 
+            {
+                PlayerSnake player = (PlayerSnake) snake;
+                player.input(e, true);
+            }
+        }
+    }
+    
+    @Override
+    public void keyReleased(KeyEvent e) 
+    {
+        for (Snake snake : snakes) {
+            if (snake instanceof PlayerSnake) // Gives all PlayerSnakes the keyReleased.
+            {
+                PlayerSnake player = (PlayerSnake) snake;
+                player.input(e, false);
+            }
+        }
+    }
+    
+    // Returns the positions HashMap
+    public HashMap<Point, Rectangle> getPositions() 
+    { return positions; }
+    
+    // *********************  Private Methods  *********************
+
+    // adds all obstacles by getting a random obstacle image, creating a Sprite and setting it to a random size.
+    private void addObstacles(int numOfObjects)
+    {
         ArrayList<Image> objectSprites = loadAllObjectSprites();
-        objects = new ArrayList<>();
+        obstacles = new ArrayList<>();
 
-        for (int i = 1; i <= numOfObjects; i++) {
+        for (int i = 0; i < numOfObjects; i++) {
             
             int randomSize = (int)(Math.random() * 4)+3;
             int randomIndex = (int) (Math.random() * objectSprites.size());
+            
             Sprite sprite = new Sprite(objectSprites.get(randomIndex), this);
+            
+            positions.put(new Point(sprite.getCollider().x, sprite.getCollider().y), 
+                          new Rectangle(sprite.getCollider().x, sprite.getCollider().y,
+                          sprite.getCollider().width, sprite.getCollider().height));
+            
             sprite.resize(PIXEL_SIZE*randomSize, PIXEL_SIZE*randomSize, positions);
-            objects.add(sprite);
+            
+            obstacles.add(sprite);
         }
     }
 
-    private ArrayList<Image> loadAllObjectSprites() {
+    // Loads all ObjectSprites by accessing the Object_Sprites folder.
+    private ArrayList<Image> loadAllObjectSprites()
+    {
         ArrayList<Image> objs = new ArrayList<>();
-        File sourceFolder = new File("src/Sprites/Object_Sprites");
-
-        for (File musicFile : sourceFolder.listFiles()) {
-            objs.add(new ImageIcon(musicFile.getPath()).getImage());
+        
+        String[] objectNames = {"cone_sprite.png", "cookie_sprite.png", "red_block_sprite.png", "spray_sprite.png"};
+        
+        for (String objectName : objectNames)
+        {
+            try {
+                objs.add(ImageIO.read(getClass().getResource("/Resources/Sprites/Object_Sprites/" + objectName))); // Loads the image by finding the sprite's path. 
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
         return objs;
     }
 
-    private void addSnakes(int numOfPlayers, int numOfComputers, Color[] colors) {
+    /* 
+     * Adds all Snakes to the screen based on the amount and Colors given in the parameters. 
+     * 
+     * All Snakes are placed in either of the four edges of the screen.
+     * 
+     */
+    
+    private void addSnakes(int numOfPlayers, int numOfComputers, Color[] colors) 
+    {
         Point[] startingPositions = { new Point(PIXEL_SIZE, PIXEL_SIZE), new Point(mainScreen.getWidth() - PIXEL_SIZE * 2, PIXEL_SIZE),
                 new Point(PIXEL_SIZE, mainScreen.getHeight() - PIXEL_SIZE * 2),
                 new Point(mainScreen.getWidth() - PIXEL_SIZE * 2, mainScreen.getHeight() - PIXEL_SIZE * 2) };
@@ -105,77 +308,41 @@ public class GameScreen extends JPanel implements ScreenActions
         if (numOfPlayers + numOfComputers > 4)
             return;
 
-        for (int i = 0; i < numOfPlayers; i++) {
+        for (int i = 0; i < numOfPlayers; i++) 
+        {
             snakes.add(new PlayerSnake(startingPositions[i].x, startingPositions[i].y, positions, colors[i], PIXEL_SIZE,
                     playerKeys[i], startingDirections[i]));
         }
-        for (int i = numOfPlayers; i < numOfComputers + numOfPlayers; i++) {
+        
+        for (int i = numOfPlayers; i < numOfComputers + numOfPlayers; i++) 
+        {
             snakes.add(new AISnake(startingPositions[i].x, startingPositions[i].y, this, colors[i], PIXEL_SIZE,
                     startingDirections[i]));
         }
+        
         numberOfSnakesAlive = snakes.size();
     }
 
-    private void checkCollisions() {
-        for (int i = 0; i < snakes.size(); i++) {
+    // Checks if a Snake has collided with the edge of the screen, or with another Point.
+    private void checkCollisions() 
+    {
+        for (int i = 0; i < snakes.size(); i++) 
+        {
             Snake snake = snakes.get(i);
-            if ((snake.hasCollided(snake) || isOutOfBounds(snake)) && snake.isAlive()) 
+            if ((hasCollided(snake) || isOutOfBounds(snake)) && snake.isAlive()) 
             {
                 snake.setIsAlive(false);
-                snakes.get(i).removeAllPositions();
+                snakes.get(i).removeAllPositions(); // Removes all traces of the Snake
                 numberOfSnakesAlive--;
             }
         }
     }
-
-    public boolean isOutOfBounds(Rectangle rect) {
-        return (rect.x < 0 || rect.x > getWidth() - rect.width || rect.y < 0 || rect.y > getHeight() - rect.height);
-    }
-
-    public boolean isOutOfBounds(Snake snake) {
-        Rectangle collider = snake.getCollider();
-        return (collider.x < 0 || collider.x > getWidth() - collider.width || collider.y < 0
-                || collider.y > getHeight() - collider.height);
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        if (numberOfSnakesAlive > 1) {
-            for (Snake snake : snakes) 
-            {
-                if (snake.isAlive())
-                    snake.draw((Graphics2D) g);
-            }
-            for (Sprite object : objects) {
-                object.draw((Graphics2D) g);
-            }
-        } 
-        else 
-        {
-            String temp = "";
-            int winnerIndex = getSnakeAliveIndex();
-            
-            if (winnerIndex == -1)
-            {
-                temp = "draw";
-            }
-            else
-            {
-                temp = "Snake #" + (winnerIndex+1) + " wins!";
-            }
-            Graphics2D graphics = (Graphics2D) g;
-            
-            Snake winnerSnake = snakes.get(winnerIndex);
-            winnerSnake.draw(graphics);
-        
-            graphics.setColor(Color.white);
-            graphics.setFont(new Font("impact", Font.PLAIN, 40));
-            graphics.drawString(temp, getWidth() / 2 - temp.length()*(PIXEL_SIZE/4), getHeight() / 2);
-        }
-    }
     
+    /* 
+     * Returns the Index of the only Snake alive.
+     * 
+     * If no Snake is alive, then it will return -1.
+     */
     private int getSnakeAliveIndex()
     {
         for (int i = 0; i < snakes.size(); i++)
@@ -187,99 +354,41 @@ public class GameScreen extends JPanel implements ScreenActions
         return -1;
     }
 
-    private void update() {
-        for (Snake snake : snakes) {
-            int[] arr = snake.getDirection().directionValues;
-            snake.move(arr[0], arr[1]);
-        }
-    }
-
-    public HashMap<Point, Rectangle> getPositions() {
-        return positions;
-    }
-
-    @Override
-    public void step() 
+    // Moves all the Snakes currently alive by retrieving their directionValues.
+    private void update() 
     {
-        if (numberOfSnakesAlive > 1 && !(loadingTime <= LOADING_TIME)) 
+        for (Snake snake : snakes) 
         {
-            update();
-            checkCollisions();
+            if (snake.isAlive())
+            {
+                int[] arr = snake.getDirection().directionValues;
+                snake.move(arr[0], arr[1]);
+            }
         }
-        repaint();
-        loadingTime++;
     }
 
-    private boolean playerSnakeAlive() {
-        for (Snake snake : snakes) {
-            if (snake instanceof PlayerSnake)
+    // Returns a boolean based upon if their is a PlayerSnake that is alive in the snakes ArrayList  
+    private boolean playerSnakeAlive() 
+    {
+        for (Snake snake : snakes) 
+        {
+            if (snake instanceof PlayerSnake && snake.isAlive())
                 return true;
         }
         return false;
     }
-
-    @Override
-    public void initializeScreen() 
-    {
-        addSnakes(numberOfPlayers, numberOfComputers, colors);
-        addObjects(numberOfObjects);
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) 
-    {
-        if ((numberOfSnakesAlive <= 1 && e.getKeyCode() == KeyEvent.VK_ENTER) || 
-            (e.getKeyCode() == KeyEvent.VK_ENTER && !playerSnakeAlive())) 
-        {
-            numberOfRounds--;
-            if (numberOfRounds > 0)
-            {
-                removeAllItems();
-                initializeScreen();
-            }
-            
-            else
-            {
-                mainScreen.remove(this);
-                mainScreen.timer.setDelay(1000 / 60);
-                mainScreen.switchScreen("options screen");
-            }
-        }
-
-        for (Snake snake : snakes) 
-        {
-            if (snake instanceof PlayerSnake) 
-            {
-                PlayerSnake player = (PlayerSnake) snake;
-                player.input(e, true);
-            }
-        }
-    }
     
+    // Used to remove all Points and other objects when a new round is started.
     private void removeAllItems()
     {
         for (int i = snakes.size()-1; i >=0; i--)
-        {
             snakes.remove(i);
-        }
         
-        for (int i = objects.size()-1; i >= 0; i--)
-        {
-            objects.remove(i);
-        }
+        for (int i = obstacles.size()-1; i >= 0; i--)
+            obstacles.remove(i);
         
         positions.clear();
         
         loadingTime = 0;
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        for (Snake snake : snakes) {
-            if (snake instanceof PlayerSnake) {
-                PlayerSnake player = (PlayerSnake) snake;
-                player.input(e, false);
-            }
-        }
     }
 }

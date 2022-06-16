@@ -1,8 +1,15 @@
 package classes;
 
-/**
+/*
+ * Direction.java
+ * 
  * An enum that represents all possible directions that a Snake may travel
- * by giving its direction name values of an integer array.
+ * by giving its direction name values an integer array.
+ * 
+ * There are only eight possible directions a Snake may move:
+ * 
+ * North, South, East, West, NorthEast, NorthWest, 
+ * SouthWest, and SouthEast. 
  *
  * Author: Andrew Tacoi
  */
@@ -33,5 +40,10 @@ public enum Direction
 	                return direction;
 	        }
 	        return null;
+	    }
+	    
+	    public String toString()
+	    {
+	        return getDirection(directionValues).name();
 	    }
 }

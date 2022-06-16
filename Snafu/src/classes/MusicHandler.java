@@ -6,13 +6,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javax.sound.sampled.*;
 
-/**
+/*
+ * MusicHandler.java
+ * 
  * A class that allows for Music to be played in the program.
+ * 
+ * A track is just a Clip. 
  * 
  * Each MusicHandler object will be able to play one track at a time.
  * 
  * If a track is played while another one is playing, the current
- * track being played will be overwritten.
+ * track being played will be stopped and overwritten.
  *
  * Author: Andrew Tacoi
  */
@@ -32,6 +36,8 @@ public class MusicHandler
     	for (File musicFile : musicFiles)
     	{
     		String name = musicFile.getName();
+    		
+    		// Removes the File's type by finding the index of '.' Example: Music.wav becomes Music
     		int indexOfFileType = name.indexOf('.');
     		name = name.substring(0, indexOfFileType);
     		
@@ -45,6 +51,8 @@ public class MusicHandler
     	for (File musicFile : musicFiles)
     	{
     		String name = musicFile.getName();
+    		
+    		// Removes the File's type by finding the index of '.' Example: Music.wav becomes Music
     		int indexOfFileType = name.indexOf('.');
     		name = name.substring(0, indexOfFileType);
     		
@@ -55,9 +63,13 @@ public class MusicHandler
     public MusicHandler(File musicFile)
     {
     	sounds = new HashMap<>();
+    	
     	String name = musicFile.getName();
+    	
+    	// Removes the File's type by finding the index of '.' Example: Music.wav becomes Music
     	int indexOfFileType = name.indexOf('.');
     	name = name.substring(0, indexOfFileType);
+    	
     	sounds.put(name, musicFile);
     }
 	
@@ -67,7 +79,14 @@ public class MusicHandler
      * 
      * Plays a certain track based on the key given.
      * 
-     * If no track exits, a MusicHandlerException
+     * When the track is located and the clip is null, an AudioInputStream will be used
+     * and will provide the clip variable with the clips in the 
+     * AudioInputStream. 
+     * 
+     * It will stop the current track playing and add the
+     * new audio clip. 
+     * 
+     * If no track exists, a MusicHandlerException
      * is thrown.
      * 
      */
@@ -84,8 +103,12 @@ public class MusicHandler
 			AudioInputStream stream = null;
 	        
 			try {
+			    // Starts the directory at '/Resources' by cutting off all values before its index. 
+			    int indexOfResources = sounds.get(key).getPath().indexOf("/Resources");
+			    String path = sounds.get(key).getPath().substring(indexOfResources);
 			    
-				stream = AudioSystem.getAudioInputStream(sounds.get(key));
+			    // Gets the track by finding its URL.
+				stream = AudioSystem.getAudioInputStream(getClass().getResource(path));
 				
 			} catch (UnsupportedAudioFileException e) {
 			    
@@ -96,15 +119,16 @@ public class MusicHandler
 				e.printStackTrace();
 			}
 			
-			if (clip == null)
-			    
-				try {
-				    
-					clip = AudioSystem.getClip();
-					
-				} catch (LineUnavailableException e) {
-					e.printStackTrace();
-				}
+			if (clip == null)  
+			{
+    			try {
+    			    
+    				clip = AudioSystem.getClip();
+    				
+    			} catch (LineUnavailableException e) {
+    				e.printStackTrace();
+    			}
+			}
 			
 			if (clip.isRunning())
 				clip.stop();
@@ -144,12 +168,14 @@ public class MusicHandler
 	public void addSong(File musicFile)
     {
         String name = musicFile.getName();
-        int indexOfFileType = name.indexOf('.');
-        name = name.substring(0, indexOfFileType);
+        
+        int indexOfFileType = name.indexOf('.'); 
+        name = name.substring(0, indexOfFileType); // Gets rid of the file's type. Example: Music.wav becomes Music.
+        
         sounds.put(name, musicFile);
     }
 	
-	// Returns an array of String of every music track currently in the MusicHandler
+	// Returns an array of Strings that contains every music track currently in the MusicHandler.
 	public String[] getMusicTrackNames()
 	{
 	    String[] temp = new String[sounds.size()];
@@ -161,11 +187,10 @@ public class MusicHandler
 	        index++;
 	    }
 	    
+	    sort(temp); // Sorts them in alphabetical order.
+	    
 	    return temp;
 	}
-	
-	public boolean isPlaying()
-	{ return clip.isRunning(); }
 	
 	//Stops the current track playing. If no track is playing, a MusicHandlerException is thrown.
 	public void stop() throws MusicHandlerException
@@ -176,9 +201,39 @@ public class MusicHandler
 			throw new MusicHandlerException("Nothing is playing");
 	}
 	
+	public boolean isPlaying()
+    { return clip.isRunning(); }
+	
+	// *********************  Private Methods  *********************
+    
+    private void sort(String[] arr) // Uses an Insertion Sort algorithm 
+    {
+        String temp = "";
+        
+        for (int i = 1, j = 0; i < arr.length; i++) 
+        { 
+            temp = arr[i];
+            
+            j = i - 1;
+            
+            while (j >= 0) 
+            {
+              if (temp.compareTo(arr[j]) > 0) 
+                break;
+              
+              arr[j + 1] = arr[j];
+              
+              j--;
+            }
+            
+            arr[j + 1] = temp;
+        }
+    }
+	
 	 // *********************  Public Sub-Classes  *********************
 	
-	public class MusicHandlerException extends Exception
+	@SuppressWarnings("serial")
+    public class MusicHandlerException extends Exception // Used to prevent Clip errors from occurring. 
 	{
 	    public MusicHandlerException(String message)
 	    {

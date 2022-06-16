@@ -8,23 +8,38 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.GraphicsEnvironment;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
-/**
+/*
+ * MainScreen.java
+ * 
  * A class that represents the MainScreen that controls all other screens
- * and contains a MusicHandler for the games background music. 
+ * and contains a MusicHandler for the game's background music. 
  * 
  * All screens are stored in a CardLayout, where each can be switched 
  * by using the switchScreen method. 
  * 
+ * All JPanel's that wish to be active will be enabled, while the
+ * rest of the cards will be disabled. This is done through the
+ * setAsActive method. 
+ * 
  * Every JPanel added to the CardLayout will inherit all the methods
  * from the ScreenActions interface in order to guarantee that each method
- * can use this classes ActionListener and KeyListener. 
+ * can use this classes's ActionListener and KeyListener. 
+ * 
+ * The General flow of the application is... 
+ * 
+ * TitleScreen -> OptionsScreen -> GameSetter -> GameScreen
+ *                              -> Open URL
+ *                              -> Quit
+ * 
+ * Then after this is done the program will flow like this:
+ * 
+ * OptionsScreen -> GameSetter -> GameScreen
+ *               -> Open URL
+ *               -> Quit
  *
  * Author: Andrew Tacoi
  */
@@ -34,8 +49,8 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
     // *********************  Fields  *********************
     
 	private MusicHandler backgroundMusicHandler;
-	private JPanel activeCard;
-	protected Timer timer;
+	private JPanel activeCard; // The JPanel currently active
+	protected Timer timer; // Main Timer of the Game
 	protected Font textFont;
 	
 	public MainScreen()
@@ -55,9 +70,7 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 		
 		setAsActive("title screen");
 		
-		loadFont();
-		
-		textFont = new Font("mania", Font.PLAIN, 70);
+		textFont = new Font("impact", Font.PLAIN, 70);
 		
 		timer = new Timer(1000/60, this);
 		timer.start();
@@ -66,7 +79,7 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 	// *********************  Public Methods  *********************
 
 	/* 
-	 * Every Card in the CardLayout will update by using this classes Timer
+	 * Every Card in the CardLayout will update by using this classe's Timer
 	*  through the ScreenActions step() method.
 	*/
 	@Override
@@ -81,7 +94,7 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 	
 	/* 
      * Every Card in the CardLayout will get input from the ScreenActions
-     * method keyPressed() and keyReleased in order to ensure the KeyListener
+     * method keyPressed() and keyReleased() in order to ensure the KeyListener
      * is always heard. 
     */
     @Override
@@ -95,16 +108,14 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
     }
 
     @Override
-    public void keyReleased(KeyEvent e) {
+    public void keyReleased(KeyEvent e) 
+    {
         if (activeCard instanceof ScreenActions)
         {
             ScreenActions activeScreen = (ScreenActions)activeCard;
             activeScreen.keyReleased(e);
         }
     }
-    
-    public MusicHandler getMusicHandler()
-    { return backgroundMusicHandler; }
 	
 	public void switchScreen(String screenName) // Used to switch to a different JPanel by using the given String
 	{
@@ -112,8 +123,11 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 		String lowerCasedName = screenName.toLowerCase();
 		
 		cardLayout.show(this, lowerCasedName);
-		setAsActive(lowerCasedName);
+		setAsActive(lowerCasedName); 
 	}
+    
+    public MusicHandler getMusicHandler()
+    { return backgroundMusicHandler; }
 	
     @Override
     public void keyTyped(KeyEvent e) {}
@@ -131,7 +145,6 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 	 * 
 	 * In addition, it will use the ScreenActions method, initalizeScreen()
 	 * only if it is a ScreenActions.
-	 * 
 	 * 
 	*/
 	private void setAsActive(String name)
@@ -151,7 +164,7 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 				else
 					panel.setEnabled(false);
 				
-                if (panel.isEnabled() && panel instanceof ScreenActions)
+                if (panel.isEnabled() && panel instanceof ScreenActions && !(panel instanceof GameScreen)) // Does not run when the Card is a GameScreen.
                 {
                     ScreenActions activeScreen = (ScreenActions)panel;
                     activeScreen.initializeScreen();
@@ -162,27 +175,16 @@ public class MainScreen extends JPanel implements ActionListener, KeyListener
 	
 	private ArrayList<File> loadAllMusic() // Loads every music track in the music folder
     {
-        File sourceFolder = new File("src/Sounds/Music");
-        ArrayList<File> files = new ArrayList<>();
-        
-        for (File musicFile : sourceFolder.listFiles())
+	    ArrayList<File> files = new ArrayList<>();
+	    
+	    String[] trackNames = {"Better_Call.wav", "Comfort_Zone.wav", "Rolling_Down_The_Street,_In_My_Katamari.wav",
+	                           "Handsome_Guy.wav", "Dreemurr.wav", "Giygas.wav", "AbsoluteGarbage.wav"};
+	    
+        for (String trackName : trackNames)
         {
-            files.add(musicFile);
+            files.add(new File(getClass().getResource("/Resources/Sounds/Music/" + trackName).getPath()));
         }
         
         return files;
-    }
-    
-    private void loadFont() // Loads the mania font from the Fonts folder.
-    {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        
-        try {
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File("src/Fonts/mania.ttf")));
-        } catch (FontFormatException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

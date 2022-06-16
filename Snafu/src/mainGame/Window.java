@@ -3,7 +3,14 @@ package mainGame;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-// The main Window of the game.
+/*
+ * Window.java
+ * 
+ * Main frame of the game.
+ * 
+ * Author: Andrew Tacoi
+ */
+
 public class Window extends JFrame
 {	
 	public Window()

@@ -11,17 +11,32 @@ import classes.*;
 import classes.MusicHandler.*;
 
 /*
- * OptionsScreen
+ * OptionsScreen.java
  * 
- * An interface used to allow every card
- * stored in the MainScreen
- * to be able to use the MainScreens
- * ActionListener and KeyListener, 
- * and initialize the screen again
- * once the card is enabled.
+ * The OptionsScreen contains three rhombuses
+ * that represent the user's three options:
  * 
- * Initialization is done through
- * the initalizeScreen() method.
+ * - Start a new game
+ * - View the Original Game's manual
+ * - Quit the application. 
+ * 
+ * rhombuses will be created in the createPolygon
+ * method and their will be a label placed on top 
+ * of the rhombuse that will be one of the values in 
+ * the options String array. 
+ * 
+ * All labels will be placed on the top left corner
+ * of the shape to allow for centered text. 
+ * 
+ * The user will be able to use the wasd keys or 
+ * arrow keys to control this screen. Their
+ * current position will be represented by a lighter
+ * rhombuse placed underneath on the other polygons. 
+ * 
+ * In addition, a sound effect will be played when the 
+ * user moves to another option.
+ * 
+ * Author: Andrew Tacoi
  */
 
 @SuppressWarnings("serial")
@@ -36,7 +51,7 @@ public class OptionsScreen extends JPanel implements ScreenActions
 	private JLabel[] labels;
 	private Polygon[] optionsPolygons; // These are the rhombuses that are behind the labels.
 	private MusicHandler soundEffect;
-	private Font font = new Font("mania", Font.PLAIN, 70);
+	private Font font = new Font("impact", Font.PLAIN, 70);
 	
 	// *********************  Constructors  *********************
 	
@@ -45,7 +60,7 @@ public class OptionsScreen extends JPanel implements ScreenActions
 		setName("options screen");
 		setBackground(new Color(243, 150, 0));
 		setLayout(null);
-		soundEffect = new MusicHandler(new File("src/Sounds/Sound-Effects/Menu_Sound.wav"));
+        soundEffect = new MusicHandler(new File(getClass().getResource("/Resources/Sounds/Sound_Effects/Menu_Sound.wav").getPath()));
 		mainScreen = screen;
 		PIXEL_SIZE = mainScreen.getWidth()/6;
 	}
@@ -57,7 +72,7 @@ public class OptionsScreen extends JPanel implements ScreenActions
 	 { repaint(); }
     
 	/* 
-	 * Paints each rhombuses in the optionsPolygon and another polygon under the rhombuse that 
+	 * Paints each rhombuse in the optionsPolygon and another polygon under the rhombuse that 
 	 * the user has selected.
 	 */
     public void paintComponent(Graphics g)
@@ -147,8 +162,8 @@ public class OptionsScreen extends JPanel implements ScreenActions
 	
     
     /* 
-     * Adds each label by placing getting each string in the options array
-     * and placing each label at the rhombuses upper left corner point.
+     * Adds each label by getting each string in the options array
+     * and placing each label at the rhombuse's upper left corner point.
      */
     
 	private void addLabels()
@@ -191,7 +206,7 @@ public class OptionsScreen extends JPanel implements ScreenActions
 		
 		optionsPolygons = new Polygon[xPositions.length];
 		
-		for (int i = 0; i < optionsPolygons.length; i++)
+		for (int i = 0; i < optionsPolygons.length; i++) // Adds and shifts each polygon.
 		{
 			optionsPolygons[i] = new Polygon(rombusSize.xpoints, rombusSize.ypoints, rombusSize.npoints);
 			optionsPolygons[i].translate(xPositions[i], yPositions[i]);
@@ -202,11 +217,12 @@ public class OptionsScreen extends JPanel implements ScreenActions
 	{
 	    try {
             java.awt.Desktop.getDesktop().browse(new URI("https://archive.org/details/intellivision-snafu/mode/2up"));
+            
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            
             e.printStackTrace();
         } catch (URISyntaxException e) {
-            // TODO Auto-generated catch block
+            
             e.printStackTrace();
         }
     }
@@ -220,7 +236,7 @@ public class OptionsScreen extends JPanel implements ScreenActions
         {
             try {
                 
-                mainScreen.getMusicHandler().play("Comfort Zone", true);
+                mainScreen.getMusicHandler().play("Comfort_Zone", true);
             } catch (MusicHandlerException e) {
                 
                 e.printStackTrace();

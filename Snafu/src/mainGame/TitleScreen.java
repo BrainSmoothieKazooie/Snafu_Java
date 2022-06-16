@@ -6,8 +6,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 import classes.*;
@@ -16,11 +17,11 @@ import classes.MusicHandler.MusicHandlerException;
 /**
  * TitleScreen.java
  * 
- * When the Title Screen is loaded, the games logo is moved for 
+ * When the TitleScreen is loaded, the game's logo is moved for 
  * the amount of total time it takes to load it, represented
  * by the TITLE_LOADING_TIME variable. 
  * 
- * Then the user can load the options Screen by pressing enter. 
+ * Then the user can load the OptionsScreen by pressing enter. 
  *
  * Author: Andrew Tacoi
  */
@@ -44,7 +45,13 @@ public class TitleScreen extends JPanel implements ScreenActions
 		setName("title screen");
 		mainScreen = screen;
 		setBackground(Color.black);
-		logo = new Sprite(new ImageIcon("src/Sprites/Snake/Snafu_Box_Art.jpg").getImage());
+		
+		try {
+            logo = new Sprite(ImageIO.read(getClass().getResource("/Resources/Sprites/Snake_Sprites/Snafu_Box_Art.jpg"))); // Loads the logo
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
 		logo.resize(mainScreen.getWidth()/4, mainScreen.getHeight()/2);
 	}
 	
@@ -57,7 +64,7 @@ public class TitleScreen extends JPanel implements ScreenActions
 		g.drawImage(logo.getImage(), logo.getCollider().x, logo.getCollider().y, 
 					logo.getCollider().width, logo.getCollider().height, null);
 		
-		if (finishedLoading)
+		if (finishedLoading) // Painted when the logo has finished loading.
 		{
 			Graphics2D graphics = (Graphics2D)g;
 			graphics.setColor(Color.white);
@@ -73,14 +80,17 @@ public class TitleScreen extends JPanel implements ScreenActions
 	public void initializeScreen() 
 	{
 	    try {
-            mainScreen.getMusicHandler().play("Rolling Down The Street, In My Katamari");
+            mainScreen.getMusicHandler().play("Rolling_Down_The_Street,_In_My_Katamari");
             
         } catch (MusicHandlerException e) {
             
             e.printStackTrace();
         }
+	    
 		titleTime = 0;
 		finishedLoading = false;
+		
+		// Logo's initial position
 		logo.setCollider(new Rectangle(-logo.getCollider().width, mainScreen.getHeight()/2-logo.getCollider().height/2, 
 										logo.getCollider().width, logo.getCollider().height));
 	}
@@ -103,7 +113,7 @@ public class TitleScreen extends JPanel implements ScreenActions
     @Override
     public void keyPressed(KeyEvent e) 
     {
-        if (KeyEvent.VK_ENTER == e.getKeyCode() && finishedLoading)
+        if (KeyEvent.VK_ENTER == e.getKeyCode() && finishedLoading) // The User can go to the OptionsScreen when these conditions have been met.
         {
             try {
                 mainScreen.getMusicHandler().stop();

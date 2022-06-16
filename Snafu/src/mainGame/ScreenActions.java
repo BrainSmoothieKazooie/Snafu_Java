@@ -7,13 +7,15 @@ import java.awt.event.KeyEvent;
  * 
  * An interface used to allow every card
  * stored in the MainScreen
- * to be able to use the MainScreens
+ * to be able to use the MainScreen's
  * ActionListener and KeyListener, 
  * and initialize the screen again
  * once the card is enabled.
  * 
  * Initialization is done through
  * the initalizeScreen() method.
+ * 
+ * Author: Andrew Tacoi
  */
 
 public interface ScreenActions 

@@ -6,14 +6,16 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-/**
+/*
+ * PlayerSnake.java
+ * 
  * Represents a snake that a player
  * can control, and will change its direction
  * based upon the input pressed.
  * 
  * There must be only four inputs given to 
  * the PlayerSnake to represent its four different
- * directions: Up, Down, Left, and Right.
+ * directions: Up, Down, Right, and Left.
  *
  * Author: Andrew Tacoi
  */
@@ -22,8 +24,8 @@ public class PlayerSnake extends Snake
 {
     // *********************  Fields  *********************
     
-    private int[] playerKeys;
-	private boolean[] keysPressed = new boolean[4]; // Up, Down, Right, Left keys
+    private int[] playerKeys; // Up, Down, Right, Left keys
+	private boolean[] keysPressed = new boolean[4]; // True if the key is currently pressed.
 	
 	// *********************  Constructors  *********************
 	
@@ -53,22 +55,22 @@ public class PlayerSnake extends Snake
     
 	public void input(KeyEvent e, boolean isPressed) 
 	{
-		if ((e.getKeyCode() == playerKeys[0]))
+		if ((e.getKeyCode() == playerKeys[0])) // Up
 		{
             keysPressed[0] = isPressed;
 		}
       		
-		else if ((e.getKeyCode() == playerKeys[1]))
+		else if ((e.getKeyCode() == playerKeys[1])) // Down
 		{
 		    keysPressed[1] = isPressed;
 		}
       		
-		else if ((e.getKeyCode() == playerKeys[2]))
+		else if ((e.getKeyCode() == playerKeys[2])) // Right
 		{
 		    keysPressed[2] = isPressed;
 		}
       		
-		else if ((e.getKeyCode() == playerKeys[3]))
+		else if ((e.getKeyCode() == playerKeys[3])) // Left
 		{
 		    keysPressed[3] = isPressed;
 		}
@@ -78,7 +80,7 @@ public class PlayerSnake extends Snake
 	
 	// *********************  Private Methods  *********************
 	
-	// Changes the snakes direction based on the input given.
+	// Changes the snakes direction based on the input given. The Snake will not respond to a direction that would make it travel backwards. 
 	private void updateDirection() 
 	{
 	    if (keysPressed[0] && keysPressed[3] && direction != Direction.SOUTHWEST) // Turn North West
